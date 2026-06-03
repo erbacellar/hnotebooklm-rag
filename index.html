@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Segundo Cérebro — Telegram · Hermes · NotebookLM · n8n</title>
+<meta name="description" content="Guia passo a passo para construir um assistente pessoal com Hermes Agent, NotebookLM, n8n e Telegram — uma página por etapa.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+:root{
+  --ink:#0b0c10;--ink2:#101117;--surface:#15161e;--surface2:#1b1d27;
+  --line:rgba(236,231,221,.09);--line2:rgba(236,231,221,.16);
+  --cream:#ece7dd;--muted:#9b978d;--faint:#6f6c64;
+  --amber:#e6b65f;--amber2:#f4d49a;--sky:#9bb6ff;
+  --ok:#83d8a6;--warn:#f0b45e;--danger:#ef9077;
+  --serif:'Fraunces',Georgia,serif;--sans:'Hanken Grotesk',system-ui,sans-serif;--mono:'JetBrains Mono',ui-monospace,monospace;
+  --maxw:830px;--side:316px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--ink);color:var(--cream);font-family:var(--sans);font-size:16.5px;line-height:1.68;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:radial-gradient(60% 50% at 80% 6%,rgba(230,182,95,.12),transparent 60%),radial-gradient(55% 45% at 6% 16%,rgba(155,182,255,.10),transparent 60%),radial-gradient(70% 60% at 50% 112%,rgba(230,182,95,.05),transparent 60%),var(--ink)}
+body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.035;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+a{color:var(--amber);text-decoration:none}a:hover{color:var(--amber2)}
+::selection{background:rgba(230,182,95,.28);color:#fff}
+.wrap{display:flex}
+nav.side{width:var(--side);flex:0 0 var(--side);position:sticky;top:0;height:100vh;overflow-y:auto;padding:30px 18px 50px;border-right:1px solid var(--line);background:rgba(13,14,19,.6);backdrop-filter:blur(6px)}
+nav.side::-webkit-scrollbar{width:8px}nav.side::-webkit-scrollbar-thumb{background:var(--line2);border-radius:8px}
+.logo{font-family:var(--serif);font-size:22px;font-weight:600;color:#fff;line-height:1.1;cursor:pointer}
+.logo b{color:var(--amber);font-style:italic;font-weight:500}
+.logo-sub{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);margin:8px 2px 18px}
+.phase>.pl{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--amber);padding:14px 8px 6px;display:block;opacity:.85}
+.phase a{display:flex;gap:9px;align-items:baseline;padding:6px 10px;border-radius:9px;color:var(--muted);font-size:13.5px;border-left:2px solid transparent;cursor:pointer;transition:.15s}
+.phase a:hover{background:var(--surface);color:var(--cream)}
+.phase a.active{background:var(--surface2);color:#fff;border-left-color:var(--amber)}
+.phase a .num{font-family:var(--mono);font-size:11px;color:var(--faint);min-width:20px}
+.phase a.active .num{color:var(--amber)}
+main{flex:1;min-width:0;max-width:var(--maxw);margin:0 auto;padding:0 30px 80px}
+.page{display:none;padding-top:54px;min-height:60vh}
+.page.active{display:block;animation:fade .32s ease}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* hero */
+.kick{font-family:var(--mono);font-size:11.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--amber);margin-bottom:20px}
+.hero h1{font-family:var(--serif);font-weight:500;font-size:clamp(36px,6.5vw,68px);line-height:1.03;letter-spacing:-.02em;margin:0 0 20px;color:#fff}
+.hero h1 em{font-style:italic;color:var(--amber)}
+.hero .lead{font-size:18.5px;color:var(--muted);max-width:62ch;margin:0 0 28px}
+.meta{display:flex;flex-wrap:wrap;gap:9px;font-family:var(--mono);font-size:11px}
+.meta span{border:1px solid var(--line2);border-radius:999px;padding:6px 13px;color:var(--muted)}
+.bento{display:grid;grid-template-columns:repeat(6,1fr);gap:13px;margin:44px 0 0}
+.cell{background:linear-gradient(160deg,var(--surface),var(--ink2));border:1px solid var(--line);border-radius:18px;padding:20px;position:relative;overflow:hidden;transition:.25s}
+.cell:hover{border-color:var(--line2);transform:translateY(-3px)}
+.cell .ic{font-size:23px;margin-bottom:10px;display:block}
+.cell h3{font-family:var(--serif);font-weight:500;font-size:19px;margin:0 0 5px;color:#fff}
+.cell p{margin:0;font-size:13px;color:var(--muted);line-height:1.5}
+.cell.big{grid-column:span 4}.cell.med{grid-column:span 3}.cell.sm{grid-column:span 2}
+.cell.glow::after{content:"";position:absolute;width:160px;height:160px;right:-40px;top:-40px;background:radial-gradient(circle,rgba(230,182,95,.18),transparent 70%)}
+/* page content */
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--amber);margin-bottom:10px;display:flex;gap:9px;align-items:center}
+.eyebrow .dot{width:5px;height:5px;border-radius:50%;background:var(--amber);box-shadow:0 0 9px var(--amber)}
+h2{font-family:var(--serif);font-weight:500;font-size:clamp(27px,4vw,37px);line-height:1.1;letter-spacing:-.015em;margin:0 0 14px;color:#fff}
+.page>p{color:var(--cream);opacity:.92}
+.lead2{font-size:17.5px;line-height:1.62;color:var(--cream);opacity:.96;margin:0 0 10px}
+.lead2 + .lead2{opacity:.88;font-size:16px}
+h3{font-family:var(--serif);font-weight:500;font-size:20px;color:#fff;margin:26px 0 6px}
+ul,ol{padding-left:22px}li{margin:6px 0}
+strong,b{color:#fff;font-weight:600}
+code{font-family:var(--mono);background:var(--surface2);border:1px solid var(--line);padding:1px 6px;border-radius:6px;font-size:13px;color:var(--amber2)}
+pre{position:relative;background:#0a0b0f;border:1px solid var(--line2);border-radius:14px;margin:16px 0;overflow:hidden}
+pre .bar{display:flex;align-items:center;gap:7px;padding:11px 14px;border-bottom:1px solid var(--line)}
+pre .bar i{width:11px;height:11px;border-radius:50%;display:inline-block;background:#33363f}
+pre .bar i:nth-child(1){background:#ef9077}pre .bar i:nth-child(2){background:var(--warn)}pre .bar i:nth-child(3){background:var(--ok)}
+pre .bar .t{margin-left:8px;font-family:var(--mono);font-size:11px;color:var(--faint)}
+pre code{display:block;background:none;border:none;padding:18px;color:#cdd3e6;font-size:12.8px;line-height:1.62;white-space:pre;overflow-x:auto}
+pre .copy{position:absolute;top:8px;right:8px;background:var(--surface2);border:1px solid var(--line2);color:var(--muted);border-radius:8px;padding:4px 11px;font-family:var(--mono);font-size:10.5px;cursor:pointer}
+pre .copy:hover{background:var(--amber);color:#1a1304;border-color:var(--amber)}
+.box{border-radius:14px;padding:16px 18px;margin:18px 0;border:1px solid var(--line);background:var(--surface)}
+.box .h{font-family:var(--mono);font-size:11px;letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:6px}
+.box p{margin:6px 0;font-size:14.5px}
+.box.tip{border-left:3px solid var(--amber)}.box.tip .h{color:var(--amber)}
+.box.warn{border-left:3px solid var(--warn);background:rgba(240,180,94,.05)}.box.warn .h{color:var(--warn)}
+.box.danger{border-left:3px solid var(--danger);background:rgba(239,144,119,.05)}.box.danger .h{color:var(--danger)}
+.box.src{border-left:3px solid var(--sky)}.box.src .h{color:var(--sky)}
+.req{border:1px dashed var(--line2);border-radius:14px;padding:14px 18px;margin:18px 0;background:rgba(155,182,255,.03)}
+.req .h{font-family:var(--mono);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--sky);margin-bottom:4px}
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14px}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:var(--surface2);color:#fff;font-family:var(--mono);font-size:11px;letter-spacing:.04em;text-transform:uppercase;font-weight:500}
+.mermaid{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;margin:20px 0;text-align:center}
+.steps{counter-reset:s;list-style:none;padding-left:0}
+.steps>li{counter-increment:s;position:relative;padding-left:42px;margin:14px 0}
+.steps>li::before{content:counter(s);position:absolute;left:0;top:-2px;width:28px;height:28px;border-radius:9px;background:var(--surface2);border:1px solid var(--line2);color:var(--amber);font-family:var(--mono);font-size:13px;display:grid;place-items:center}
+/* page nav */
+.pagenav{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:54px;padding-top:24px;border-top:1px solid var(--line)}
+.pagenav button{background:var(--surface);border:1px solid var(--line2);color:var(--cream);border-radius:11px;padding:11px 16px;font-family:var(--sans);font-size:14px;cursor:pointer;max-width:46%;text-align:left;transition:.18s;line-height:1.3}
+.pagenav button:hover:not(:disabled){border-color:var(--amber);color:#fff}
+.pagenav button:disabled{opacity:.28;cursor:default}
+.pagenav button .l{display:block;font-family:var(--mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);margin-bottom:2px}
+.pagenav #nextBtn{text-align:right}
+.pagemeta{font-family:var(--mono);font-size:11px;color:var(--faint);white-space:nowrap}
+.menubtn{display:none}
+@media(max-width:1040px){
+  nav.side{position:fixed;left:-340px;z-index:60;transition:left .28s;box-shadow:30px 0 60px #000a}
+  nav.side.open{left:0}
+  .menubtn{display:inline-flex;align-items:center;gap:8px;position:fixed;top:14px;left:14px;z-index:70;background:var(--amber);color:#1a1304;border:none;border-radius:11px;padding:10px 15px;font-family:var(--mono);font-size:12px;font-weight:600;cursor:pointer;box-shadow:0 8px 24px #0006}
+  main{padding-top:60px}
+  .bento{grid-template-columns:repeat(2,1fr)}.cell.big,.cell.med,.cell.sm{grid-column:span 1}.cell.big{grid-column:span 2}
+}
+@media(max-width:560px){.bento{grid-template-columns:1fr}.cell.big{grid-column:span 1}.pagemeta{display:none}}
+</style>
+</head>
+<body>
+<button class="menubtn" onclick="document.querySelector('nav.side').classList.toggle('open')">☰ Etapas</button>
+<div class="wrap">
+<nav class="side">
+  <div class="logo" data-page="inicio">Segundo <b>Cérebro</b></div>
+  <div class="logo-sub">Telegram · Hermes · NotebookLM · n8n</div>
+  <div class="phase">
+    <a data-page="inicio" data-label="Início"><span class="num">◆</span> Início</a>
+  </div>
+  <div class="phase">
+    <span class="pl">Fase I — Fundamentos</span>
+    <a data-page="prereq" data-label="Pré-requisitos"><span class="num">01</span> Pré-requisitos</a>
+    <a data-page="conceitos" data-label="Conceitos-chave"><span class="num">02</span> Conceitos-chave</a>
+    <a data-page="hermes" data-label="Instalar o Hermes"><span class="num">03</span> Instalar o Hermes</a>
+    <a data-page="notebooklm" data-label="NotebookLM + skill"><span class="num">04</span> NotebookLM + skill</a>
+    <a data-page="soul" data-label="SOUL.md (persona)"><span class="num">05</span> SOUL.md (persona)</a>
+  </div>
+  <div class="phase">
+    <span class="pl">Fase II — No dia a dia</span>
+    <a data-page="telegram" data-label="Telegram, voz, foto, TTS"><span class="num">06</span> Telegram, voz, foto, TTS</a>
+    <a data-page="usando" data-label="Usando o cérebro"><span class="num">07</span> Usando o cérebro</a>
+    <a data-page="persistencia" data-label="Persistência (systemd)"><span class="num">08</span> Persistência</a>
+  </div>
+  <div class="phase">
+    <span class="pl">Fase III — Automação &amp; Inteligência</span>
+    <a data-page="n8n" data-label="n8n + MCP"><span class="num">09</span> n8n + MCP</a>
+    <a data-page="workflows" data-label="Construindo os Workflows"><span class="num">10</span> Construindo os Workflows</a>
+    <a data-page="automacao" data-label="Automação (crons)"><span class="num">11</span> Automação (crons)</a>
+    <a data-page="roteamento" data-label="Roteamento por tema"><span class="num">12</span> Roteamento por tema</a>
+    <a data-page="diario" data-label="Diário pessoal"><span class="num">13</span> Diário pessoal</a>
+  </div>
+  <div class="phase">
+    <span class="pl">Fase IV — Alcance &amp; Escala</span>
+    <a data-page="usuarios" data-label="Múltiplos usuários"><span class="num">14</span> Múltiplos usuários</a>
+    <a data-page="tunnel" data-label="Cloudflare Tunnel"><span class="num">15</span> Cloudflare Tunnel</a>
+    <a data-page="nuvem" data-label="Evoluir para a nuvem"><span class="num">16</span> Evoluir para a nuvem</a>
+    <a data-page="oracle" data-label="Oracle Cloud — passo a passo"><span class="num">17</span> Oracle Cloud — passo a passo</a>
+  </div>
+  <div class="phase">
+    <span class="pl">Fase V — Referência</span>
+    <a data-page="licoes" data-label="Lições aprendidas"><span class="num">18</span> Lições aprendidas</a>
+    <a data-page="fontes" data-label="Fontes &amp; referências"><span class="num">19</span> Fontes &amp; referências</a>
+  </div>
+</nav>
+
+<main>
+  <!-- INÍCIO -->
+  <section class="page" id="inicio">
+    <div class="kick">Guia passo a passo · uma página por etapa</div>
+    <div class="hero">
+      <h1>Construa um <em>segundo cérebro</em> que vive no seu Telegram.</h1>
+      <p class="lead">Um assistente pessoal que entende texto, voz e foto; usa o NotebookLM como memória persistente; automatiza com n8n; e roda sozinho — local (WSL2) ou na nuvem. Navegue pelas <b>fases</b> no menu (ou use os botões Anterior/Próximo). Cada página é uma etapa isolada.</p>
+      <div class="meta"><span>~4–6 H</span><span>CUSTO ≈ R$0</span><span>WSL2 / LINUX</span><span>IA · AUTOMAÇÃO</span></div>
+    </div>
+    <div class="mermaid">
+flowchart TD
+  U["📱 Você · Telegram"] -->|texto / voz / foto| G["🤖 Hermes Gateway"]
+  G --> R{"Roteamento por intenção"}
+  R -->|conhecimento| NLM["🧠 NotebookLM"]
+  R -->|automação / via n8n| N8N["🔌 n8n · servidor MCP"]
+  N8N -->|source add / ask| NLM
+  C["⏰ Crons diários"] --> G
+  C -->|alimenta| NLM
+  G -->|TTS Gemini · artefatos| U
+    </div>
+    <div class="bento">
+      <div class="cell big glow"><span class="ic">📱</span><h3>Telegram como porta de entrada</h3><p>Texto, voz (Whisper local) e foto (visão). De qualquer lugar.</p></div>
+      <div class="cell sm"><span class="ic">🧠</span><h3>Memória NotebookLM</h3><p>Respostas citadas.</p></div>
+      <div class="cell sm"><span class="ic">🔌</span><h3>n8n + MCP</h3><p>Braço de automação.</p></div>
+      <div class="cell med"><span class="ic">⏰</span><h3>Pipeline diário autônomo</h3><p>Alimenta, limpa e te entrega um briefing — sozinho.</p></div>
+      <div class="cell med"><span class="ic">🎙️</span><h3>Podcast &amp; infográfico</h3><p>Artefatos no chat, com TTS natural (Gemini).</p></div>
+    </div>
+    <div class="box tip"><span class="h">Como usar</span><p>Siga as fases <b>em ordem</b> — cada uma depende da anterior. No topo de cada etapa há os <b>pré-requisitos</b>; no fim, as <b>fontes oficiais</b>. Onde aparecer <code>USUARIO</code> ou <code>&lt;...&gt;</code>, troque pelos seus valores. Códigos têm botão <b>copiar</b>.</p></div>
+  </section>
+
+  <!-- 01 -->
+  <section class="page" id="prereq">
+    <div class="eyebrow"><span class="dot"></span> Fase I · Etapa 01</div>
+    <h2>Pré-requisitos</h2>
+    <p class="lead2">Toda esta stack roda sobre <b>Linux</b>. No Windows, isso significa <b>WSL2</b> — um Linux real rodando dentro do Windows, onde vivem o Hermes, o NotebookLM e o n8n. Esta etapa só garante que a base (sistema, Python, Node) esteja pronta <b>antes</b> de instalar as peças, pra você não travar no meio do caminho.</p>
+    <div class="req"><span class="h">Você vai precisar de</span>
+      <ul>
+        <li><b>WSL2</b> (Windows) com Ubuntu/Debian — ou Linux. <a href="https://learn.microsoft.com/windows/wsl/install" target="_blank">Instalar o WSL2</a>.</li>
+        <li><b>Python 3.10+</b>, <b>Node.js 18+</b> e <b>git</b>.</li>
+        <li>Conta <b>Google</b> (NotebookLM) e uma <b>API key do Gemini</b> (TTS de qualidade — Etapa 06).</li>
+        <li>Um <b>bot do Telegram</b> via <a href="https://t.me/BotFather" target="_blank">@BotFather</a> (guarde o token).</li>
+      </ul>
+    </div>
+    <h3>Verifique o básico</h3>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>python3 --version     # 3.10 ou maior
+node --version        # 18 ou maior   (se faltar: sudo apt install nodejs npm)
+git --version
+ps -p 1 -o comm=      # deve imprimir: systemd</code></pre>
+    <div class="box warn"><span class="h">⚠ systemd no WSL2</span><p>Se a última linha NÃO imprimir <code>systemd</code>, habilite-o: edite <code>/etc/wsl.conf</code> (<code>sudo nano /etc/wsl.conf</code>), adicione as 2 linhas abaixo, salve (Ctrl+O, Enter, Ctrl+X) e no <b>PowerShell</b> rode <code>wsl --shutdown</code> e reabra o WSL.</p></div>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">/etc/wsl.conf</span></div><code>[boot]
+systemd=true</code></pre>
+  </section>
+
+  <!-- 02 -->
+  <section class="page" id="conceitos">
+    <div class="eyebrow"><span class="dot"></span> Fase I · Etapa 02</div>
+    <h2>Conceitos-chave</h2>
+    <p class="lead2">Antes de instalar qualquer coisa, vale entender as <b>4 peças</b> do sistema e como elas dividem o trabalho — assim, em cada etapa seguinte, você sabe <b>qual peça</b> está mexendo e <b>por quê</b>. Pense nesta tabela como o "elenco" do projeto.</p>
+    <p>Em uma frase: o <b>Hermes</b> pensa e age, o <b>NotebookLM</b> lembra, o <b>n8n</b> automatiza, e o <b>MCP</b> é a ponte entre o Hermes e ferramentas externas como o n8n.</p>
+    <table>
+      <tr><th>Peça</th><th>O que é</th></tr>
+      <tr><td><b>Hermes Agent</b></td><td>Assistente de IA com tool-calling que vive no terminal e em mensageiros. Tem skills, memória, crons e MCP.</td></tr>
+      <tr><td><b>NotebookLM</b></td><td>Responde com base em fontes que você adiciona. Motor de <b>síntese</b> (RAG), não bloco de notas. Usado via a CLI <code>notebooklm</code>.</td></tr>
+      <tr><td><b>Skill</b></td><td>Extensão do Hermes em <code>.md</code>, ativada por intenção.</td></tr>
+      <tr><td><b>MCP</b></td><td>Model Context Protocol: o agente (cliente) fala com ferramentas externas (servidores). O n8n será um servidor MCP.</td></tr>
+      <tr><td><b>n8n</b></td><td>Automação em workflows visuais. Self-hosted é gratuito.</td></tr>
+    </table>
+    <div class="box src"><span class="h">↗ Fontes oficiais</span><p><a href="https://hermes-agent.nousresearch.com/docs/" target="_blank">Docs Hermes</a> · <a href="https://github.com/teng-lin/notebooklm-py" target="_blank">notebooklm-py</a> · <a href="https://docs.n8n.io/" target="_blank">Docs n8n</a></p></div>
+  </section>
+
+  <!-- 03 -->
+  <section class="page" id="hermes">
+    <div class="eyebrow"><span class="dot"></span> Fase I · Etapa 03</div>
+    <h2>Instalar o Hermes — receita completa</h2>
+    <p class="lead2">O <b>Hermes</b> é o cérebro executor de todo o sistema: é ele que recebe suas mensagens, <b>decide o que fazer</b>, chama ferramentas (terminal, NotebookLM, n8n) e te responde. Ele sozinho não "pensa" — para isso, se conecta a um <b>provedor de modelos</b> (a inteligência que gera as respostas, como os modelos da Nous).</p>
+    <p>Nesta etapa você faz três coisas: <b>instala</b> o Hermes, faz <b>login</b> no provedor e <b>valida</b> que tudo responde. É a fundação — sem ela, nenhuma etapa seguinte funciona.</p>
+    <div class="req"><span class="h">Antes</span><ul><li>Python 3.10+ e pip (Etapa 01).</li></ul></div>
+    <h3>3.1 Instalar o pacote</h3>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>pip install hermes-agent
+hermes postinstall      # instala dependências extras (Node, navegador, ripgrep, ffmpeg)</code></pre>
+    <p>Se <code>pip</code> reclamar de ambiente gerenciado, use <code>pipx install hermes-agent</code> (instale antes com <code>sudo apt install pipx</code>).</p>
+    <h3>3.2 Fazer login no provedor de modelos (Nous Portal — grátis)</h3>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>hermes setup --portal   # abre o navegador p/ login OAuth, define o Nous como provedor
+                        # e ativa a Tool Gateway. Siga o fluxo no navegador.</code></pre>
+    <h3>3.3 Validar</h3>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>hermes status           # confira modelo, provider e o caminho do .env
+hermes --tui            # abre um chat de teste (saia com /exit ou Ctrl+C)
+# se algo estiver estranho:
+hermes doctor           # diagnostica problemas comuns
+hermes model            # reconfigura o provedor/modelo</code></pre>
+    <div class="box warn"><span class="h">⚠ Requisito do modelo</span><p>Escolha um modelo com <b>≥ 64K tokens de contexto</b>. Há opções <b>gratuitas</b> no Nous Portal. Modelos grátis seguem instruções com menos fidelidade (relevante no roteamento e no diário, adiante) — os truques deste guia contornam isso.</p></div>
+    <div class="box tip"><span class="h">📌 Disclaimer importante</span><p>As versões mudam com o tempo. Se <b>qualquer comando aqui falhar ou divergir</b>, o <b><a href="https://hermes-agent.nousresearch.com/docs/getting-started/quickstart" target="_blank">Quickstart oficial</a></b> é sempre a fonte da verdade — consulte-o para se atualizar. Vale para todas as etapas deste guia.</p></div>
+    <div class="box src"><span class="h">↗ Fontes</span><p><a href="https://hermes-agent.nousresearch.com/docs/getting-started/quickstart" target="_blank">Quickstart</a> · <a href="https://hermes-agent.nousresearch.com/docs/user-guide/configuring-models" target="_blank">Modelos</a> · <a href="https://hermes-agent.nousresearch.com/docs/reference/cli-commands" target="_blank">Comandos</a></p></div>
+  </section>
+
+  <!-- 04 -->
+  <section class="page" id="notebooklm">
+    <div class="eyebrow"><span class="dot"></span> Fase I · Etapa 04</div>
+    <h2>NotebookLM (CLI) + a skill no Hermes</h2>
+    <p class="lead2">O <b>NotebookLM</b> (do Google) responde perguntas <b>com base apenas nas fontes que você adiciona</b> — links, PDFs, vídeos, textos — e <b>cita</b> de onde tirou cada afirmação. Diferente de um chat comum, ele não "chuta" do conhecimento geral: ele <b>sintetiza o SEU material</b>. É exatamente isso que o torna um bom "cérebro": você o alimenta com o que importa pra você, e ele vira uma <b>memória pesquisável e confiável</b>.</p>
+    <p class="lead2">Você vai instalar duas coisas e é importante entender a diferença: a <b>CLI <code>notebooklm</code></b> é o programa de linha de comando que controla o NotebookLM sem abrir o navegador; a <b>skill</b> é um "manual de instruções" que ensina o <b>Hermes</b> a usar essa CLI <b>por intenção</b>. Ou seja: a CLI dá o poder, e a skill ensina o agente <b>quando e como</b> usá-lo — assim, quando você pedir algo em linguagem natural no Telegram, o Hermes traduz sozinho para os comandos certos.</p>
+    <div class="req"><span class="h">Antes</span><ul><li>Hermes instalado · conta Google.</li></ul></div>
+    <h3>4.1 Instalar a CLI</h3>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>PYTHON=$(command -v python3.12 || command -v python3.11 || command -v python3.10)
+$PYTHON -m venv ~/.notebooklm-venv
+source ~/.notebooklm-venv/bin/activate
+pip install "notebooklm-py[browser]"
+playwright install chromium
+
+# deixar o comando "notebooklm" acessível no PATH (sem sudo):
+mkdir -p ~/bin
+ln -sf ~/.notebooklm-venv/bin/notebooklm ~/bin/notebooklm
+echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc && source ~/.bashrc
+notebooklm --version    # confirma que está acessível</code></pre>
+    <h3>4.2 Autenticar (login no Google via navegador)</h3>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>notebooklm login        # abre um Chromium; faça login na sua conta Google
+notebooklm auth check   # valida (salva storage_state.json)
+notebooklm list         # deve responder (vazio no começo)</code></pre>
+    <h3>4.3 Instalar a skill oficial no Hermes</h3>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code># 1. descubra a convenção de skills do SEU build:
+hermes skills list
+
+# 2. crie a pasta e grave a skill (gerada pela própria CLI):
+mkdir -p ~/.hermes/skills/research/notebooklm
+notebooklm skill show > ~/.hermes/skills/research/notebooklm/SKILL.md
+
+# 3. confirme que o Hermes a enxergou:
+hermes skills list | grep notebooklm</code></pre>
+    <div class="box warn"><span class="h">⚠ Armadilhas</span><p>• O caminho/formato de skill <b>varia entre versões</b> — confira com <code>hermes skills list</code>.<br>• <b>Skills carregam no boot do gateway</b> → após instalar/editar, <b>reinicie o gateway</b> (Etapa 08).</p></div>
+    <div class="box src"><span class="h">↗ Fontes</span><p><a href="https://github.com/teng-lin/notebooklm-py" target="_blank">notebooklm-py (GitHub)</a> — referência da CLI e da skill.</p></div>
+  </section>
+
+  <!-- 05 -->
+  <section class="page" id="soul">
+    <div class="eyebrow"><span class="dot"></span> Fase I · Etapa 05</div>
+    <h2>SOUL.md — a personalidade do agente</h2>
+    <p class="lead2">O <code>SOUL.md</code> é a <b>alma</b> do seu agente: um texto em prosa que define <b>quem ele é, como fala e como se comporta</b>. O Hermes lê esse arquivo <b>a cada mensagem</b> e "incorpora" o que está escrito — então é aqui que você molda o <b>tom</b> (direto? bem-humorado? formal?), as <b>regras inegociáveis</b> e até como ele <b>interpreta suas intenções</b> (por exemplo, decidir qual cérebro consultar).</p>
+    <p class="lead2">Pense nele como o "briefing de personalidade" que você daria a um assistente humano no primeiro dia de trabalho. Quanto mais claro o briefing, mais o agente age do jeito que você espera — sem você precisar repetir instruções a cada conversa. É um arquivo vivo: você vai voltar aqui para refiná-lo nas Etapas 11 e 12.</p>
+    <div class="req"><span class="h">Antes</span><ul><li>Hermes instalado.</li></ul></div>
+    <p>Fica em <code>~/.hermes/SOUL.md</code>, é <b>relido a cada mensagem</b> (sem restart) e é prosa que o agente incorpora.</p>
+    <div class="box warn"><span class="h">⚠ Maiúsculas importam</span><p>Linux distingue <code>SOUL.md</code> de <code>soul.md</code> — costuma ser <b>maiúsculo</b>. Confira: <code>ls -la ~/.hermes/*.md</code>.</p></div>
+    <h3>Criar/escrever o arquivo</h3>
+    <p>O bloco abaixo grava o arquivo inteiro de uma vez (cole tudo no terminal e dê Enter):</p>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash · grava ~/.hermes/SOUL.md</span></div><code>cat > ~/.hermes/SOUL.md &lt;&lt;'SOULEOF'
+# Persona do Agente
+
+&lt;!-- Personalidade e tom. Carregado a cada mensagem. --&gt;
+
+Você é um assistente pessoal que vive no Telegram e ajuda no dia a dia:
+estudos, organização, automações e memória.
+
+## Como você fala
+- Sempre em português do Brasil; inglês só quando necessário.
+- Direto e didático; explique de forma que qualquer pessoa entenda.
+
+## O que você nunca faz
+- Nunca apaga arquivos sem perguntar.
+- Nunca reexecuta um comando já executado sem confirmar.
+- Nunca inventa: se não sabe, diz e consulta fontes confiáveis.
+
+## Como acessar o cérebro (NotebookLM)
+- Para perguntas de conhecimento, use a skill notebooklm DIRETAMENTE.
+- Escolha o notebook cujo tema combina com a pergunta (use "notebooklm list").
+- Nunca exija que o usuário diga o notebook ou a ferramenta.
+SOULEOF</code></pre>
+    <div class="box tip"><span class="h">Dica</span><p>Antes de editar no futuro, faça backup: <code>cp ~/.hermes/SOUL.md ~/.hermes/SOUL.md.bak.$(date +%s)</code>. Você vai <b>somar diretrizes</b> nas etapas 11 e 12.</p></div>
+  </section>
+
+  <!-- 06 -->
+  <section class="page" id="telegram">
+    <div class="eyebrow"><span class="dot"></span> Fase II · Etapa 06</div>
+    <h2>Telegram, voz, foto e TTS natural</h2>
+    <p class="lead2">O <b>Telegram</b> é a <b>porta de entrada</b> do seu cérebro: em vez de abrir um terminal, você simplesmente <b>conversa com um bot</b> — de qualquer lugar, pelo celular. É o que transforma todo esse sistema técnico em algo que você usa no dia a dia sem fricção.</p>
+    <p>Aqui você conecta o bot ao Hermes e entende as <b>três formas de entrada</b> (texto, voz e foto), todas nativas. Um detalhe que faz muita diferença: o <b>TTS</b> (a voz que o agente usa para falar) — o padrão soa robótico, e a gente troca pelo Gemini para ficar natural.</p>
+    <div class="req"><span class="h">Antes</span><ul><li>Hermes instalado · token do bot (@BotFather).</li></ul></div>
+    <h3>6.1 Conectar o Telegram</h3>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>hermes gateway setup    # assistente: escolha "Telegram" e cole o token do bot;
+                        # ele também pergunta seu ID de usuário autorizado.
+hermes gateway run      # roda em foreground (a persistência vem na Etapa 08)</code></pre>
+    <p>Mande qualquer mensagem ao seu bot — o Hermes deve responder.</p>
+    <h3>6.2 Entradas (tudo nativo)</h3>
+    <table>
+      <tr><th>Entrada</th><th>Como funciona</th></tr>
+      <tr><td>⌨️ Texto</td><td>Direto.</td></tr>
+      <tr><td>🎤 Voz</td><td>STT nativo: <code>faster-whisper</code> local (grátis, offline).</td></tr>
+      <tr><td>📷 Foto / OCR</td><td>Tool nativa <code>vision_analyze</code> → modelo multimodal.</td></tr>
+      <tr><td>📄 PDF/arquivo</td><td>Anexe no chat; o agente adiciona como fonte.</td></tr>
+    </table>
+    <h3>6.3 TTS natural com Gemini <span style="font-family:var(--mono);font-size:12px;color:var(--amber)">— a dica que muda tudo</span></h3>
+    <p>O TTS padrão soa robótico. Para voz natural, use o <b>Gemini</b> com sua <b>API key</b> (<a href="https://aistudio.google.com/apikey" target="_blank">gere aqui</a>). Passo a passo concreto de como gravar a chave no <code>.env</code>:</p>
+    <ol class="steps">
+      <li>Descubra o caminho do <code>.env</code>: <code>hermes config env-path</code> (ex.: <code>/home/USUARIO/.hermes/.env</code>).</li>
+      <li>Abra no editor: <code>nano ~/.hermes/.env</code></li>
+      <li>Vá até o fim do arquivo e adicione <b>uma linha</b> (nome exato da variável na doc de Voice &amp; TTS — em geral <code>GEMINI_API_KEY</code>):
+        <pre><div class="bar"><i></i><i></i><i></i><span class="t">~/.hermes/.env (adicione no fim)</span></div><code>GEMINI_API_KEY=cole_sua_chave_do_gemini_aqui</code></pre>
+      </li>
+      <li>Salve no nano: <b>Ctrl+O</b> → <b>Enter</b> (confirma o nome) → <b>Ctrl+X</b> (sai).</li>
+      <li>Confirme e recarregue: <code>hermes status</code> (deve mostrar Google/Gemini ✓) e depois <code>hermes gateway restart</code>.</li>
+    </ol>
+    <div class="box src"><span class="h">↗ Fontes</span><p><a href="https://hermes-agent.nousresearch.com/docs/user-guide/messaging/telegram" target="_blank">Telegram</a> · <a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/tts" target="_blank">Voice &amp; TTS</a> · <a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/vision" target="_blank">Vision</a></p></div>
+  </section>
+
+  <!-- 07 -->
+  <section class="page" id="usando">
+    <div class="eyebrow"><span class="dot"></span> Fase II · Etapa 07</div>
+    <h2>Usando o cérebro</h2>
+    <p class="lead2">Agora o cérebro ganha conteúdo. A ideia central é <b>organizar o conhecimento em notebooks por tema</b> (um para estudos, outro para trabalho, outro para notícias...). Cada notebook é um "balde" de fontes sobre um assunto — e essa separação é o que mais tarde permite o agente <b>escolher o cérebro certo</b> sozinho (Etapa 11).</p>
+    <p>O fluxo é sempre o mesmo: <b>criar</b> um notebook → <b>adicionar fontes</b> → <b>perguntar</b> (com citações) → opcionalmente <b>gerar artefatos</b> (podcast, infográfico). Quanto melhor a curadoria das fontes, melhores e mais confiáveis as respostas.</p>
+    <div class="req"><span class="h">Antes</span><ul><li>CLI notebooklm autenticada.</li></ul></div>
+    <h3>7.1 Crie notebooks por tema</h3>
+    <table>
+      <tr><th>Propósito</th><th>Nome sugerido</th></tr>
+      <tr><td>Estudo</td><td><code>Base de Conhecimento</code></td></tr>
+      <tr><td>Trabalho</td><td><code>Projetos</code></td></tr>
+      <tr><td>Feed de notícias</td><td><code>Radar Diário</code></td></tr>
+      <tr><td>Diário pessoal</td><td><code>Bordo</code></td></tr>
+    </table>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>notebooklm create "Base de Conhecimento"
+notebooklm list      # anote o ID que aparecer</code></pre>
+    <h3>7.2 Adicione fontes</h3>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash · troque ID_DO_NOTEBOOK</span></div><code>NB=ID_DO_NOTEBOOK
+notebooklm source add "https://exemplo.com/artigo" -n $NB
+notebooklm source add "https://youtube.com/watch?v=..." -n $NB     # transcreve
+notebooklm source add --type text --title "Nota" -n $NB "texto inline"
+notebooklm source add-research --mode deep "tema de estudo" -n $NB  # SEMEAR de uma vez</code></pre>
+    <h3>7.3 Pergunte e gere artefatos</h3>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>notebooklm ask -n $NB "Explique o tema e cite as fontes."
+notebooklm ask -n $NB "..." --save-as-note
+notebooklm generate audio -n $NB --format brief --length short
+notebooklm language set pt_BR     # idioma GLOBAL dos artefatos</code></pre>
+    <div class="box warn"><span class="h">⚠ Lições</span><p>• <b>Idioma é global:</b> sem <code>language set pt_BR</code>, podcasts saem em inglês.<br>• <b>Áudio é pesado</b> (Telegram envia até ~50 MB) → converta: <code>ffmpeg -y -i in.wav -ac 1 -b:a 64k out.mp3</code>.<br>• <b><code>add-research --mode deep</code> só para semear</b> — ruim para feed diário.<br>• <b>O <code>ask</code> SINTETIZA</b>; para texto literal use <code>source list</code> + <code>source fulltext</code>.</p></div>
+  </section>
+
+  <!-- 08 -->
+  <section class="page" id="persistencia">
+    <div class="eyebrow"><span class="dot"></span> Fase II · Etapa 08</div>
+    <h2>Persistência: o gateway que volta sozinho</h2>
+    <p class="lead2">Até aqui, o "gateway" (o processo que liga o Hermes ao Telegram) só roda enquanto o terminal está aberto — feche-o e o bot fica mudo. Esta etapa resolve isso transformando o Hermes num <b>serviço de sistema</b> (via systemd): ele passa a rodar em <b>segundo plano</b>, <b>reinicia sozinho</b> se travar e <b>volta automaticamente</b> quando a máquina liga.</p>
+    <p>É a diferença entre "um programa que eu preciso ligar toda vez" e "um assistente que está <b>sempre lá</b>". No WSL2 há um detalhe extra (o <i>linger</i>) que garante isso mesmo após você deslogar.</p>
+    <div class="req"><span class="h">Antes</span><ul><li>systemd habilitado (Etapa 01).</li></ul></div>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>hermes gateway install        # cria o serviço systemd de usuário
+hermes gateway start
+hermes gateway status         # deve mostrar: active (running)
+
+# CRÍTICO no WSL: linger faz sobreviver ao logout e voltar no boot
+sudo loginctl enable-linger $USER
+loginctl show-user $USER | grep -i linger     # deve mostrar Linger=yes</code></pre>
+    <div class="box warn"><span class="h">⚠ Como recarregar depois</span><p>Mudou <b>skill</b> ou <b>servidor MCP</b>? Rode <code>hermes gateway restart</code>. (O <code>SOUL.md</code> NÃO precisa — é relido a cada mensagem.)</p></div>
+    <div class="box tip"><span class="h">Teste o auto-boot</span><p>No PowerShell: <code>wsl --shutdown</code>, reabra o WSL e mande uma mensagem. Se responder sem você ligar nada, está ok.</p></div>
+  </section>
+
+  <!-- 09 -->
+  <section class="page" id="n8n">
+    <div class="eyebrow"><span class="dot"></span> Fase III · Etapa 09</div>
+    <h2>n8n + MCP: dando braços ao cérebro</h2>
+    <p class="lead2">Até agora o cérebro <b>pensa e lembra</b>. Com o <b>n8n</b> ele ganha <b>braços para agir</b>: o n8n é uma plataforma de automação onde você monta "workflows" (sequências de passos que conectam apps e executam tarefas). Self-hosted, é gratuito e roda na sua máquina.</p>
+    <p class="lead2">Para o Hermes conversar com o n8n usamos o <b>MCP</b> (Model Context Protocol) — um "idioma" padrão criado pela Anthropic em que o <b>agente (cliente)</b> pede e uma <b>ferramenta (servidor)</b> executa. Na prática: você cria uma ferramenta no n8n, ela vira um "servidor MCP", e o Hermes passa a <b>chamá-la sozinho</b> quando a intenção da sua mensagem combinar. É assim que, mais tarde, ele vai salvar/consultar seu diário ou disparar automações.</p>
+    <div class="req"><span class="h">Antes</span><ul><li>Node 18+ · Hermes como serviço.</li></ul></div>
+    <h3>9.1 Instalar (self-hosted, grátis)</h3>
+    <div class="box warn"><span class="h">⚠ EACCES no npm</span><p>Node via apt aponta o global para <code>/usr/local</code> (root). <b>Não use sudo</b> — redirecione para o seu home (o bloco abaixo já faz isso):</p></div>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>mkdir -p ~/.npm-global
+npm config set prefix "$HOME/.npm-global"
+grep -q '.npm-global/bin' ~/.bashrc || echo 'export PATH="$HOME/.npm-global/bin:$PATH"' >> ~/.bashrc
+export PATH="$HOME/.npm-global/bin:$PATH"
+npm install -g n8n --loglevel=error
+n8n --version</code></pre>
+    <h3>9.2 n8n como serviço systemd</h3>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash · cria a unit e liga</span></div><code>cat > ~/.config/systemd/user/n8n.service &lt;&lt;'EOF'
+[Unit]
+Description=n8n workflow automation
+After=network.target
+[Service]
+Type=simple
+Environment=PATH=%h/.npm-global/bin:/usr/local/bin:/usr/bin:/bin
+Environment=NODE_FUNCTION_ALLOW_BUILTIN=*
+ExecStart=%h/.npm-global/bin/n8n start
+Restart=on-failure
+RestartSec=5
+[Install]
+WantedBy=default.target
+EOF
+systemctl --user daemon-reload
+systemctl --user enable --now n8n
+# abra http://localhost:5678 no navegador e crie a conta de dono (pule licença/trial)</code></pre>
+    <div class="box warn"><span class="h">⚠ NODE_FUNCTION_ALLOW_BUILTIN</span><p>Sem essa variável, o nó <b>Code</b> não consegue <code>require('child_process')</code> (necessário p/ chamar o <code>notebooklm</code>).</p></div>
+    <h3>9.3 Expor o n8n como MCP e conectar o Hermes</h3>
+    <ol class="steps">
+      <li>No n8n, crie um workflow com o nó <b>MCP Server Trigger</b>. Defina um <b>Path</b> (ex.: <code>cerebro</code>) e <b>Bearer Auth</b> com um token (gere com <code>openssl rand -hex 24</code>).</li>
+      <li>Conecte ao trigger uma ferramenta (comece com uma <b>Code Tool</b> "olá mundo"). <b>Salve</b> e <b>Ative</b> o workflow.</li>
+      <li>Registre no Hermes (responda os prompts; o valor do header é o token <b>puro</b>):
+        <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>hermes mcp add n8n --url http://localhost:5678/mcp/cerebro --auth header
+hermes mcp list
+hermes mcp test n8n        # conecta e descobre as tools</code></pre>
+      </li>
+      <li>Habilite no config (<code>nano ~/.hermes/config.yaml</code> → em <code>mcp_servers.n8n</code> ponha <code>enabled: true</code>, salve com Ctrl+O/Enter/Ctrl+X) e rode <code>hermes gateway restart</code>.</li>
+    </ol>
+    <div class="box danger"><span class="h">⚠ Lições de ouro</span><p>• <b>PATH em serviço systemd é mínimo:</b> o nó Code roda via <code>/bin/sh</code> sem <code>.bashrc</code> → use <b>caminho absoluto</b> <code>/home/USUARIO/bin/notebooklm</code>.<br>• <b>Heredoc no terminal quebra a indentação Python</b> → crie scripts com <code>base64 -d &gt; arquivo</code>.<br>• <b>Tools são por plataforma</b>: <code>hermes tools --summary</code>.</p></div>
+    <div class="box src"><span class="h">↗ Fontes</span><p><a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp" target="_blank">MCP (Hermes)</a> · <a href="https://hermes-agent.nousresearch.com/docs/guides/use-mcp-with-hermes" target="_blank">Use MCP</a> · <a href="https://docs.n8n.io/" target="_blank">Docs n8n</a></p></div>
+  </section>
+
+  <!-- WORKFLOWS -->
+  <section class="page" id="workflows">
+    <div class="eyebrow"><span class="dot"></span> Fase III · Etapa 10</div>
+    <h2>Construindo os Workflows do n8n</h2>
+    <p class="lead2">Nesta etapa você constrói os <b>4 workflows</b> que formam o sistema de automação. Três são <b>sub-workflows</b> (executados por outro workflow, como funções reutilizáveis) e um é o <b>servidor MCP</b> (o ponto de entrada que o Hermes chama). A ordem importa: crie os sub-workflows primeiro, depois o servidor MCP que os usa.</p>
+    <div class="req"><span class="h">Antes</span><ul><li>n8n instalado e rodando em <code>http://localhost:5678</code> (Etapa 09).</li><li>Gere um token Bearer: <code>openssl rand -hex 24</code> e guarde.</li></ul></div>
+
+    <div class="mermaid">
+flowchart TD
+  MCP["🔌 Cerebro MCP"] -->|consulta_notebook_via_n8n| CC["Consulta Cerebro"]
+  MCP -->|salvar_no_diario| SW["Salvar Diario"]
+  MCP -->|consultar_diario| CC
+  MCP -->|listar_diario| LW["Listar Diario"]
+    </div>
+
+    <h3>Workflow 1 — "Consulta Cerebro" <span style="font-family:var(--mono);font-size:12px;color:var(--muted)">(sub-workflow)</span></h3>
+    <p>Recebe uma <b>pergunta</b> e o <b>nome de um notebook</b>, resolve o nome para o ID real e faz a consulta no NotebookLM. É reutilizado tanto pela ferramenta de consulta geral quanto pelo diário.</p>
+    <ol class="steps">
+      <li>Clique em <b>+ New Workflow</b> e nomeie: <code>Consulta Cerebro</code>.</li>
+      <li>Adicione o nó <b>"When executed by Another Workflow"</b> (Trigger). Dentro dele, defina <b>dois campos de input</b>:
+        <ul>
+          <li>Nome: <code>pergunta</code> &nbsp;·&nbsp; Tipo: <code>String</code></li>
+          <li>Nome: <code>notebook</code> &nbsp;·&nbsp; Tipo: <code>String</code></li>
+        </ul>
+      </li>
+      <li>Conecte um nó <b>Code</b> (JavaScript) à saída do trigger. Apague o código padrão e cole o código abaixo:</li>
+    </ol>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">Nó Code — Consulta Cerebro</span></div><code>const { execSync } = require('child_process');
+const NB = '/home/USUARIO/bin/notebooklm';  // substitua USUARIO pelo seu
+
+let j = $input.first().json || {};
+function pick(o,keys){if(!o)return null;for(const k of keys){if(o[k]!=null&&typeof o[k]!=='object')return o[k];}return null;}
+
+let pergunta = pick(j,['pergunta','query','chatInput','input','question']);
+let nb       = pick(j,['notebook','notebook_name','notebookName']);
+if(!pergunta||!nb){
+  for(const v of Object.values(j)){
+    if(v&&typeof v==='object'){
+      pergunta = pergunta||pick(v,['pergunta','query','chatInput','input','question']);
+      nb       = nb||pick(v,['notebook','notebook_name','notebookName']);
+    }
+  }
+}
+
+pergunta = String(pergunta||'').replace(/"/g,'\\"');
+const nbInput = String(nb||'').trim().toLowerCase();
+
+// fallback: Estudos de IA — troque pelo ID do SEU notebook padrão
+let nbId    = 'COLE_ID_DO_NOTEBOOK_PADRAO';
+let nbTitle = 'Notebook padrão (fallback)';
+
+if(nbInput){
+  try{
+    const out = execSync(`${NB} list --json`,{encoding:'utf8',timeout:60000});
+    const nbs = JSON.parse(out.slice(out.indexOf('{'))).notebooks||[];
+    const m   = nbs.find(n=>(n.title||'').toLowerCase()===nbInput)
+             || nbs.find(n=>(n.title||'').toLowerCase().includes(nbInput));
+    if(m){nbId=m.id;nbTitle=m.title;}
+  }catch(e){}
+}
+
+let resposta;
+try{
+  resposta = execSync(`${NB} ask -n ${nbId} "${pergunta}"`,{encoding:'utf8',timeout:180000});
+}catch(e){
+  resposta = 'Erro: '+(e.stderr||e.message||String(e));
+}
+
+return [{ json:{ notebook_usado:nbTitle, resposta } }];</code></pre>
+    <div class="box warn"><span class="h">⚠ Atenção</span><p>Substitua <code>USUARIO</code> pelo seu usuário Linux (descubra com <code>echo $USER</code>) e <code>COLE_ID_DO_NOTEBOOK_PADRAO</code> pelo ID do notebook que deve ser o fallback (encontre com <code>notebooklm list</code>).</p></div>
+    <ol class="steps" start="4">
+      <li>Conecte o nó Code ao trigger arrastando o conector.</li>
+      <li>Clique em <b>Save</b> (canto superior direito) e <b>ative o workflow</b> (toggle Active).</li>
+    </ol>
+
+    <h3>Workflow 2 — "Salvar Diario" <span style="font-family:var(--mono);font-size:12px;color:var(--muted)">(sub-workflow)</span></h3>
+    <p>Recebe um <b>texto</b> e o salva como fonte no notebook do diário.</p>
+    <ol class="steps">
+      <li>Crie um novo workflow: <code>Salvar Diario</code>.</li>
+      <li>Adicione <b>"When executed by Another Workflow"</b>. Defina <b>um campo</b>:
+        <ul><li>Nome: <code>texto</code> &nbsp;·&nbsp; Tipo: <code>String</code></li></ul>
+      </li>
+      <li>Conecte um nó <b>Code</b> e cole:</li>
+    </ol>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">Nó Code — Salvar Diario</span></div><code>const { execSync } = require('child_process');
+const NB     = '/home/USUARIO/bin/notebooklm';   // substitua USUARIO
+const DIARIO = 'COLE_ID_DO_NOTEBOOK_DIARIO';     // ID do notebook "Bordo"
+
+let j     = $input.first().json || {};
+function pick(o,keys){if(!o)return null;for(const k of keys){if(o[k]!=null&&typeof o[k]!=='object')return o[k];}return null;}
+let texto = pick(j,['texto','text','conteudo','nota','content']);
+if(!texto){for(const v of Object.values(j)){if(v&&typeof v==='object'){texto=texto||pick(v,['texto','text','conteudo','nota','content']);}}}
+
+texto = String(texto||'').replace(/"/g,'\\"');
+
+let out;
+try{
+  const result = execSync(`${NB} source add --type text -n ${DIARIO} "${texto}"`,{encoding:'utf8',timeout:120000});
+  out = 'Anotação guardada no diário. '+result.trim();
+}catch(e){
+  out = 'Erro ao guardar: '+(e.stderr||e.message||String(e));
+}
+return [{ json:{ resultado:out } }];</code></pre>
+    <ol class="steps" start="4">
+      <li>Substitua <code>USUARIO</code> e coloque o ID do notebook do diário (ex.: o "Bordo" criado na Etapa 07).</li>
+      <li><b>Save</b> + <b>Active</b>.</li>
+    </ol>
+
+    <h3>Workflow 3 — "Listar Diario" <span style="font-family:var(--mono);font-size:12px;color:var(--muted)">(sub-workflow)</span></h3>
+    <p>Não recebe nenhum input — lista todas as entradas do diário com o texto literal.</p>
+    <ol class="steps">
+      <li>Crie: <code>Listar Diario</code>.</li>
+      <li>Adicione <b>"When executed by Another Workflow"</b> e deixe <b>sem campos</b> (accept all data).</li>
+      <li>Conecte um nó <b>Code</b> com o seguinte script (que foi instalado via base64 — aqui é a versão legível para referência):</li>
+    </ol>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">Nó Code — Listar Diario</span></div><code>const { execSync } = require('child_process');
+const NB     = '/home/USUARIO/bin/notebooklm';   // substitua USUARIO
+const DIARIO = 'COLE_ID_DO_NOTEBOOK_DIARIO';     // mesmo ID do Salvar Diario
+
+const listOut = execSync(`${NB} source list -n ${DIARIO} --json`,{encoding:'utf8',timeout:60000});
+const data    = JSON.parse(listOut.slice(listOut.indexOf('{')));
+const srcs    = data.sources || [];
+
+const parts = [];
+for(const s of srcs){
+  let txt = '';
+  try{
+    const ft  = execSync(`${NB} source fulltext ${s.id} -n ${DIARIO}`,{encoding:'utf8',timeout:60000});
+    const idx = ft.indexOf('Content:');
+    txt = (idx>=0 ? ft.slice(idx+8) : ft).trim();
+  }catch(e){ txt='(sem texto)'; }
+  parts.push(`• [${(s.created_at||'').replace('T',' ')}]\n${txt}`);
+}
+return [{ json:{ diario: parts.length ? parts.join('\n\n---\n\n') : 'Diário vazio.' } }];</code></pre>
+    <ol class="steps" start="4">
+      <li>Substitua <code>USUARIO</code> e <code>COLE_ID_DO_NOTEBOOK_DIARIO</code>.</li>
+      <li><b>Save</b> + <b>Active</b>.</li>
+    </ol>
+
+    <h3>Workflow 4 — "Cerebro MCP" <span style="font-family:var(--mono);font-size:12px;color:var(--muted)">(servidor MCP — o ponto de entrada)</span></h3>
+    <p>Este é o workflow central: ele recebe chamadas do Hermes via MCP e as distribui para os sub-workflows acima. Cada <b>Call n8n Workflow Tool</b> expõe uma ferramenta que o Hermes pode chamar por intenção.</p>
+    <ol class="steps">
+      <li>Crie: <code>Cerebro MCP</code>.</li>
+      <li>Adicione o nó <b>MCP Server Trigger</b>. Configure:
+        <ul>
+          <li><b>Path:</b> <code>cerebro</code></li>
+          <li><b>Authentication:</b> Bearer Auth → crie uma credencial, cole o token gerado com <code>openssl rand -hex 24</code>.</li>
+        </ul>
+      </li>
+      <li>No conector de <b>Tool</b> do trigger (botão <code>+</code>), adicione uma <b>Code Tool</b> de diagnóstico:
+        <ul>
+          <li><b>Name:</b> <code>status_n8n</code></li>
+          <li><b>Description:</b> <code>Retorna a hora atual do servidor n8n. Use para testar se a conexão está funcionando.</code></li>
+          <li><b>Code (JS):</b> <code>return "n8n OK! Hora: " + new Date().toISOString();</code></li>
+        </ul>
+      </li>
+      <li>Adicione um segundo tool: <b>Call n8n Workflow Tool</b> para a consulta geral:
+        <ul>
+          <li><b>Source:</b> Database → selecione <code>Consulta Cerebro</code></li>
+          <li><b>Name:</b> <code>consulta_notebook_via_n8n</code></li>
+          <li><b>Description:</b> <code>Consulta um notebook do NotebookLM via n8n. Use SOMENTE quando o usuário pedir explicitamente "via n8n". Para perguntas normais, NÃO use — prefira a skill notebooklm.</code></li>
+          <li>Campos <code>pergunta</code> e <code>notebook</code>: clique no <b>ícone de IA (varinha ✨)</b> em cada um — isso deixa o modelo do Hermes preencher automaticamente.</li>
+        </ul>
+      </li>
+      <li>Adicione um terceiro tool: <b>Call n8n Workflow Tool</b> para salvar no diário:
+        <ul>
+          <li><b>Source:</b> Database → <code>Salvar Diario</code></li>
+          <li><b>Name:</b> <code>salvar_no_diario</code></li>
+          <li><b>Description:</b> <code>Salva uma anotação no diário pessoal. Use SEMPRE que o usuário pedir para anotar, guardar ou registrar algo no diário.</code></li>
+          <li>Campo <code>texto</code>: clique na <b>varinha ✨</b>.</li>
+        </ul>
+      </li>
+      <li>Adicione um quarto tool: <b>Call n8n Workflow Tool</b> para consultar o diário:
+        <ul>
+          <li><b>Source:</b> Database → <code>Consulta Cerebro</code></li>
+          <li><b>Name:</b> <code>consultar_diario</code></li>
+          <li><b>Description:</b> <code>Lê e sintetiza as anotações do diário pessoal. Use quando o usuário perguntar o que anotou no diário ou pedir para consultar o diário.</code></li>
+          <li>Campo <code>pergunta</code>: clique na <b>varinha ✨</b>.</li>
+          <li>Campo <code>notebook</code>: <b>não clique na varinha</b> — digite o valor fixo <code>Bordo</code> (ou o nome do seu notebook de diário). Isso trava a consulta sempre neste notebook.</li>
+        </ul>
+      </li>
+      <li>Adicione o quinto tool: <b>Call n8n Workflow Tool</b> para listar o diário:
+        <ul>
+          <li><b>Source:</b> Database → <code>Listar Diario</code></li>
+          <li><b>Name:</b> <code>listar_diario</code></li>
+          <li><b>Description:</b> <code>Lista TODAS as anotações do diário com o texto literal de cada uma. Use quando o usuário pedir para ver, listar ou mostrar todas as anotações.</code></li>
+          <li>Sem campos para mapear.</li>
+        </ul>
+      </li>
+      <li><b>Salve</b> e <b>Ative</b> o workflow.</li>
+      <li>Agora registre o servidor MCP no Hermes (Etapa 09, passo 9.3) e teste com <code>hermes mcp test n8n</code> — deve listar as 5 tools acima.</li>
+    </ol>
+    <div class="box tip"><span class="h">💡 Por que a varinha ✨ importa</span><p>Ao clicar na varinha em um campo de input, você ativa o <b>$fromAI</b> — o n8n passa a dizer ao modelo "preencha este campo com o valor que fizer sentido para a intenção do usuário". Sem isso, o campo fica vazio e o sub-workflow não recebe a informação certa.</p></div>
+    <div class="box src"><span class="h">↗ Fontes</span><p><a href="https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.executeWorkflow/" target="_blank">Call n8n Workflow Tool</a> · <a href="https://docs.n8n.io/integrations/builtin/core-nodes/n8n-nodes-base.code/" target="_blank">Code Node</a></p></div>
+  </section>
+
+  <!-- 11 -->
+  <section class="page" id="automacao">
+    <div class="eyebrow"><span class="dot"></span> Fase III · Etapa 11</div>
+    <h2>Automação: crons que alimentam e informam</h2>
+    <p class="lead2">Um <b>cron</b> é uma <b>tarefa agendada</b> — algo que roda sozinho em horários definidos (ex.: todo dia às 8h). É o que dá <b>autonomia</b> ao seu cérebro: em vez de você sempre pedir, ele <b>se atualiza e te procura</b>.</p>
+    <p>Aqui montamos dois exemplos: um <b>briefing diário</b> (ele pesquisa novidades e te manda um resumo no Telegram) e um <b>pipeline que alimenta e limpa</b> um notebook sozinho. A ideia é o cérebro trabalhar em segundo plano — inclusive enquanto você dorme.</p>
+    <div class="req"><span class="h">Antes</span><ul><li>Hermes como serviço (o scheduler roda junto).</li></ul></div>
+    <p><b>Briefing diário</b> com pesquisa web e entrega no Telegram:</p>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>hermes cron create "0 8 * * *" "Pesquise na web as principais novidades do meu \
+tema das ultimas 24h e entregue um briefing curto em PT-BR com 4-6 topicos, cada um \
+com TITULO, contexto e o LINK real da fonte. Nao invente; descarte itens sem fonte." \
+  --name briefing --deliver telegram
+
+hermes cron run briefing && hermes cron tick   # testar na hora</code></pre>
+    <p><b>"Cérebro que se alimenta e se limpa"</b>: feed (poucas URLs/dia) + rotação que, todo dia, <b>remove fontes ruins</b> (erro/404/bloqueadas) e <b>poda as mais antigas</b>:</p>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code># feed 7h (NAO use --mode deep no diario!)
+hermes cron create "0 7 * * *" "Pesquise 4-6 noticias do tema (URL real) e para cada \
+uma rode: notebooklm source add &lt;url&gt; -n &lt;ID_RADAR&gt;. Reporte o que entrou." \
+  --name feed --deliver telegram
+
+# rotacao 7h30 (30min APOS o feed): SCRIPT deterministico que LIMPA + PODA
+#   1) notebooklm source clean -y   -> remove erro/404/bloqueadas (ja assentadas)
+#   2) poda as mais antigas se passar do cap (~200), usando caminho ABSOLUTO
+hermes cron create "30 7 * * *" --name rotacao --script rotacao.py --no-agent --deliver telegram</code></pre>
+    <div class="box danger"><span class="h">⚠ Lições do pipeline</span><p>• <b><code>source clean</code></b> é a faxina (é interativo → use <code>-y</code> em script). <b>NÃO o rode logo após adicionar</b> (apaga fontes em processamento); rode ~30 min depois — é o que a rotação faz.<br>• <b>Scripts <code>--no-agent</code> têm PATH mínimo</b> → caminho absoluto do <code>notebooklm</code> (<code>os.path.expanduser("~/bin/notebooklm")</code>).<br>• <b>Destrutivo = script determinístico</b>, nunca o LLM decidindo.<br>• Exija <b>1 link real por item</b> (o grátis alucina).</p></div>
+  </section>
+
+  <!-- 11 -->
+  <section class="page" id="roteamento">
+    <div class="eyebrow"><span class="dot"></span> Fase III · Etapa 12</div>
+    <h2>Roteamento por tema</h2>
+    <p class="lead2">Quando você tem <b>vários notebooks</b>, surge a pergunta: qual deles consultar para cada pergunta? O ideal é que <b>você não precise dizer</b> — o agente deve escolher pelo <b>tema</b> da pergunta (finanças → notebook de finanças; estudo → notebook de estudo). Isso é o "roteamento".</p>
+    <p>Aqui você ensina o Hermes a fazer isso sozinho (via SOUL.md) e descobre a <b>lição mais importante sobre agentes</b>: às vezes o modelo escolhe a ferramenta errada, e como o nome/descrição das ferramentas influencia mais essa escolha do que as instruções.</p>
+    <div class="req"><span class="h">Antes</span><ul><li>Vários notebooks + tools MCP.</li></ul></div>
+    <p>O usuário não especifica notebook nem ferramenta — o agente decide. Acrescente ao final do <code>SOUL.md</code> (o bloco abaixo já anexa):</p>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash · anexa ao SOUL.md</span></div><code>cat >> ~/.hermes/SOUL.md &lt;&lt;'SOULEOF'
+
+## Roteamento do cérebro
+- Para perguntas de conhecimento, use a skill notebooklm DIRETA (acessa qualquer notebook).
+- ESCOLHA o notebook cujo tema combina com a pergunta (use "notebooklm list").
+- Nunca exija que o usuário diga o notebook nem a ferramenta.
+SOULEOF</code></pre>
+    <div class="box danger"><span class="h">⚠ Lição central de agentes</span><p>No modelo grátis, <b>o nome/descrição de uma tool pesa mais que a diretriz do SOUL</b>. Se uma tool MCP "rouba" perguntas, <b>renomeie/reescopa a descrição</b> ("use SOMENTE quando o usuário disser 'via n8n'") para parar de competir com a skill direta.</p></div>
+  </section>
+
+  <!-- 12 -->
+  <section class="page" id="diario">
+    <div class="eyebrow"><span class="dot"></span> Fase III · Etapa 13</div>
+    <h2>Diário pessoal (memória append-only)</h2>
+    <p class="lead2">Até aqui o cérebro guarda <b>fontes externas</b> (artigos, vídeos). O <b>diário</b> guarda <b>o que VOCÊ pensa</b>: ideias, decisões, aprendizados — ditados por voz ou texto, no fluxo do dia. "<b>Append-only</b>" quer dizer que você só <b>acrescenta</b> entradas; depois consulta de forma semântica ("o que eu decidi sobre X?").</p>
+    <p>Esta etapa também traz uma lição prática forte: como <b>forçar</b> o agente a usar o cérebro certo quando uma ferramenta nativa dele (a memória interna) tenta "roubar" a tarefa — algo comum em modelos gratuitos.</p>
+    <div class="req"><span class="h">Antes</span><ul><li>n8n + MCP funcionando.</li></ul></div>
+    <p>Um notebook (ex.: <code>Bordo</code>) onde você joga ideias por voz/texto e consulta depois.</p>
+    <div class="box danger"><span class="h">⚠ O modelo "rouba" para a memória nativa</span><p>"Anota no diário" colide com a tool nativa <code>memory</code>; o grátis a prefere e ignora o SOUL. Duas frentes resolvem:</p></div>
+    <ol class="steps">
+      <li>Desligue a tool concorrente <b>só no Telegram</b> (tools são por plataforma):
+        <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>hermes tools --summary
+hermes tools disable --platform telegram memory
+hermes gateway restart</code></pre>
+      </li>
+      <li>Crie <b>tools dedicadas</b> via n8n/MCP (o modelo segue uma tool de nome distinto melhor que uma instrução). Cada uma é uma sub-workflow + um Code que roda o <code>notebooklm</code> com caminho absoluto:
+        <ul>
+          <li><code>salvar_no_diario(texto)</code> → <code>source add --type text -n &lt;BORDO&gt;</code></li>
+          <li><code>consultar_diario(pergunta)</code> → <code>ask -n &lt;BORDO&gt;</code> (síntese — "me lembre sobre X")</li>
+          <li><code>listar_diario()</code> → <code>source list</code> + <code>source fulltext</code> (texto literal)</li>
+        </ul>
+      </li>
+    </ol>
+    <div class="box tip"><span class="h">Como o diário rende mais</span><p>O <code>ask</code> sintetiza: ótimo p/ perguntas dirigidas, ruim p/ "liste tudo" (use <code>listar_diario</code>). Escreva com contexto ("decidi X <b>porque</b> Y").</p></div>
+  </section>
+
+  <!-- 13 -->
+  <section class="page" id="usuarios">
+    <div class="eyebrow"><span class="dot"></span> Fase IV · Etapa 14</div>
+    <h2>Liberar para múltiplos usuários</h2>
+    <p class="lead2">Por <b>segurança</b>, o Hermes só responde a IDs de usuário <b>autorizados</b> (por padrão, só o seu). Isso evita que qualquer pessoa que descubra seu bot ganhe acesso ao seu cérebro e às suas ferramentas. Esta etapa mostra como <b>adicionar outras pessoas</b> à lista de permissão — útil para compartilhar o assistente com família ou time.</p>
+    <div class="req"><span class="h">Antes</span><ul><li>Gateway do Telegram funcionando.</li></ul></div>
+    <p>Por padrão o bot atende só os IDs autorizados. Passo a passo concreto:</p>
+    <ol class="steps">
+      <li>Cada pessoa pega o <b>ID numérico</b> dela mandando <code>/start</code> para <a href="https://t.me/userinfobot" target="_blank">@userinfobot</a> no Telegram (ele responde com o ID).</li>
+      <li>Descubra onde fica o <code>.env</code>: <code>hermes config env-path</code> (ex.: <code>/home/USUARIO/.hermes/.env</code>).</li>
+      <li>Abra o arquivo no editor: <code>nano ~/.hermes/.env</code></li>
+      <li>Procure a linha <code>TELEGRAM_ALLOWED_USERS</code>. Se existir, acrescente os novos IDs (separados por vírgula); se não, adicione a linha no fim do arquivo:
+        <pre><div class="bar"><i></i><i></i><i></i><span class="t">~/.hermes/.env</span></div><code>TELEGRAM_ALLOWED_USERS=SEU_ID,ID_DA_PESSOA_2,ID_DA_PESSOA_3</code></pre>
+      </li>
+      <li>(Opcional) Para liberar um <b>grupo inteiro</b>, adicione também (o chat id de grupo começa com <code>-100</code>):
+        <pre><div class="bar"><i></i><i></i><i></i><span class="t">~/.hermes/.env</span></div><code>TELEGRAM_GROUP_ALLOWED_CHATS=-1001234567890</code></pre>
+      </li>
+      <li>Salve no nano: <b>Ctrl+O</b> → <b>Enter</b> → <b>Ctrl+X</b>.</li>
+      <li>Aplique: <code>hermes gateway restart</code>. Peça para a pessoa mandar uma mensagem ao bot para testar.</li>
+    </ol>
+    <div class="box danger"><span class="h">⚠ Segurança</span><p>Quem você libera tem <b>acesso total</b> ao agente — cérebro, n8n e terminal. Libere só pessoas de confiança; para times, prefira <code>TELEGRAM_GROUP_ALLOWED_CHATS</code> num grupo controlado.</p></div>
+
+    <h3>Acesso público (qualquer pessoa pode usar o bot)</h3>
+    <p>Se você quer um bot <b>aberto</b> — sem lista de IDs, qualquer um que achar o bot pode conversar — basta <b>remover ou deixar vazia</b> a variável de allowlist. O Hermes passa a responder a todos.</p>
+    <ol class="steps">
+      <li>Abra o <code>.env</code>: <code>nano ~/.hermes/.env</code></li>
+      <li>Encontre a linha <code>TELEGRAM_ALLOWED_USERS</code> e <b>apague-a completamente</b> (ou deixe vazia: <code>TELEGRAM_ALLOWED_USERS=</code>). Se a linha não existir, o bot já está sem restrição por padrão.</li>
+      <li>Salve: <b>Ctrl+O</b> → <b>Enter</b> → <b>Ctrl+X</b>.</li>
+      <li>Aplique: <code>hermes gateway restart</code>.</li>
+    </ol>
+    <div class="box danger">
+      <span class="h">🔴 Atenção máxima — acesso público significa acesso total</span>
+      <p>Sem allowlist, <b>qualquer pessoa</b> que descobrir o link do seu bot terá acesso a:</p>
+      <ul>
+        <li>Todos os seus notebooks do NotebookLM (leitura e escrita de fontes).</li>
+        <li>O n8n e todos os workflows criados.</li>
+        <li>A tool <b>terminal</b> do Hermes — o que significa <b>execução de comandos na sua máquina</b>.</li>
+      </ul>
+      <p>Use acesso público <b>apenas</b> se o seu Hermes está num ambiente isolado (ex.: VM na nuvem dedicada ao bot, sem dados sensíveis) e você entende os riscos. Para uso pessoal ou de time, a lista de IDs é sempre mais segura.</p>
+    </div>
+
+    <div class="box src"><span class="h">↗ Fontes</span><p><a href="https://hermes-agent.nousresearch.com/docs/user-guide/messaging/telegram" target="_blank">Telegram (Hermes)</a> · <a href="https://t.me/userinfobot" target="_blank">@userinfobot</a></p></div>
+  </section>
+
+  <!-- 14 -->
+  <section class="page" id="tunnel">
+    <div class="eyebrow"><span class="dot"></span> Fase IV · Etapa 15</div>
+    <h2>Cloudflare Tunnel (acesso externo)</h2>
+    <p class="lead2">Seus serviços (como o n8n) rodam só na sua máquina, em <code>localhost</code> — invisíveis para a internet. Um <b>túnel</b> cria um endereço público e seguro (HTTPS) que aponta para um serviço local, <b>sem você abrir portas no roteador</b>. Serve para webhooks de entrada (um app externo aciona seu n8n) ou para acessar o n8n de qualquer lugar com uma URL amigável.</p>
+    <p>Existem dois modos: <b>quick tunnel</b> (URL descartável, bom pra testes) e <b>named tunnel</b> (URL fixa no seu domínio, permanente — o modo de produção). Esta etapa cobre os dois.</p>
+    <div class="req"><span class="h">Antes</span><ul><li>n8n ou outro serviço rodando em <code>localhost</code>.</li><li>Para o named tunnel: um domínio gerenciado na <b>Cloudflare</b> (DNS precisa estar na CF — plano gratuito basta).</li></ul></div>
+
+    <h3>Parte 1 — Instalar o cloudflared</h3>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>mkdir -p ~/bin
+curl -L -o ~/bin/cloudflared \
+  https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+chmod +x ~/bin/cloudflared
+cloudflared --version     # deve imprimir a versão</code></pre>
+    <div class="box warn"><span class="h">⚠ Oracle Cloud (ARM)</span><p>Se você está na VM Oracle (ARM), baixe o binário arm64: substitua <code>cloudflared-linux-amd64</code> por <code>cloudflared-linux-arm64</code>.</p></div>
+
+    <h3>Parte 2 — Quick tunnel (testes)</h3>
+    <p>URL descartável, zero config, não precisa de domínio. Morre quando você encerra o processo.</p>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>cloudflared tunnel --url http://localhost:5678
+# imprime algo como: https://palavra-palavra-12345.trycloudflare.com
+# abra essa URL no navegador — é o seu n8n acessível publicamente</code></pre>
+
+    <h3>Parte 3 — Named tunnel (produção)</h3>
+    <p>URL <b>fixa</b> no seu domínio (ex.: <code>https://n8n.seudominio.com</code>), roda como serviço, permanece ativo após reboot. É o modo correto para uso real.</p>
+
+    <h4 style="font-family:var(--sans);font-size:16px;color:var(--amber2);margin:20px 0 8px">3.1 — Autenticar o cloudflared na sua conta Cloudflare</h4>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>cloudflared tunnel login
+# abre o navegador — faça login na Cloudflare e selecione o domínio
+# grava o certificado em: ~/.cloudflared/cert.pem</code></pre>
+
+    <h4 style="font-family:var(--sans);font-size:16px;color:var(--amber2);margin:20px 0 8px">3.2 — Criar o túnel nomeado</h4>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>cloudflared tunnel create segundo-cerebro
+# imprime algo como:
+# Created tunnel segundo-cerebro with id abc123-def456-...
+# Anote o ID — você vai usar a seguir.</code></pre>
+
+    <h4 style="font-family:var(--sans);font-size:16px;color:var(--amber2);margin:20px 0 8px">3.3 — Criar o arquivo de configuração</h4>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash · cria ~/.cloudflared/config.yml</span></div><code>cat > ~/.cloudflared/config.yml &lt;&lt;'EOF'
+tunnel: abc123-def456-...          # substitua pelo ID do seu túnel
+credentials-file: /home/USUARIO/.cloudflared/abc123-def456-....json
+
+ingress:
+  - hostname: n8n.seudominio.com   # substitua pelo seu subdomínio
+    service: http://localhost:5678
+  - service: http_status:404       # rota de fallback (obrigatória)
+EOF</code></pre>
+    <p>Substitua <code>USUARIO</code>, o ID do túnel e <code>n8n.seudominio.com</code> pelo subdomínio que você quer usar.</p>
+
+    <h4 style="font-family:var(--sans);font-size:16px;color:var(--amber2);margin:20px 0 8px">3.4 — Criar o registro DNS na Cloudflare</h4>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>cloudflared tunnel route dns segundo-cerebro n8n.seudominio.com
+# cria automaticamente o registro CNAME no DNS da Cloudflare
+# apontando n8n.seudominio.com para o seu túnel</code></pre>
+
+    <h4 style="font-family:var(--sans);font-size:16px;color:var(--amber2);margin:20px 0 8px">3.5 — Testar antes de fixar como serviço</h4>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>cloudflared tunnel run segundo-cerebro
+# deixe rodando e acesse https://n8n.seudominio.com no navegador
+# se abrir o n8n com HTTPS: sucesso. Ctrl+C para parar.</code></pre>
+
+    <h4 style="font-family:var(--sans);font-size:16px;color:var(--amber2);margin:20px 0 8px">3.6 — Instalar como serviço systemd (permanente)</h4>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash</span></div><code>sudo cloudflared --config ~/.cloudflared/config.yml service install
+sudo systemctl enable cloudflared
+sudo systemctl start cloudflared
+sudo systemctl status cloudflared   # deve estar: active (running)</code></pre>
+    <div class="box tip"><span class="h">💡 O túnel agora sobe no boot</span><p>A partir daqui, o túnel sobe automaticamente com a máquina. Para reiniciar: <code>sudo systemctl restart cloudflared</code>.</p></div>
+
+    <h3>Parte 4 — Proteger o acesso com Cloudflare Access (autenticação)</h3>
+    <p>Com o named tunnel, <b>qualquer pessoa</b> com a URL consegue ver o n8n. Para restringir com login (ex.: só quem tem o seu e-mail Google pode entrar), use o <b>Cloudflare Access</b> — gratuito para até 50 usuários.</p>
+    <ol class="steps">
+      <li>No painel da Cloudflare, acesse <b>Zero Trust → Access → Applications → Add an application</b>.</li>
+      <li>Escolha <b>Self-hosted</b>.</li>
+      <li>Em <b>Application domain</b>, insira seu subdomínio: <code>n8n.seudominio.com</code>.</li>
+      <li>Em <b>Policies</b>, adicione uma regra: <b>Allow</b> → <b>Emails</b> → liste os e-mails autorizados (ou use Google Workspace, GitHub, etc.).</li>
+      <li>Salve. Ao acessar o subdomínio, o Cloudflare vai exigir autenticação antes de chegar no n8n.</li>
+    </ol>
+    <div class="box tip"><span class="h">💡 Para webhooks (sem login)</span><p>Se um serviço externo precisar chamar o n8n via webhook (sem passar pelo login), crie uma <b>política separada</b> no Cloudflare Access do tipo <b>Bypass</b> para o caminho específico do webhook (ex.: <code>/webhook/*</code>). Assim o caminho do webhook fica aberto e o restante continua protegido.</p></div>
+
+    <h3>Resumo: quick tunnel vs named tunnel</h3>
+    <table>
+      <tr><th>Aspecto</th><th>Quick tunnel</th><th>Named tunnel</th></tr>
+      <tr><td>URL</td><td>Aleatória (<code>*.trycloudflare.com</code>)</td><td>Fixa no seu domínio</td></tr>
+      <tr><td>Duração</td><td>Só enquanto o processo roda</td><td>Permanente (serviço systemd)</td></tr>
+      <tr><td>Domínio próprio</td><td>Não necessário</td><td>Necessário (gratuito na CF)</td></tr>
+      <tr><td>Autenticação</td><td>Nenhuma</td><td>Cloudflare Access (opcional)</td></tr>
+      <tr><td>Uso</td><td>Testes rápidos, demos</td><td>Produção, webhooks, acesso remoto</td></tr>
+    </table>
+
+    <div class="box src"><span class="h">↗ Fontes</span><p><a href="https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/get-started/" target="_blank">Named Tunnel (início rápido)</a> · <a href="https://developers.cloudflare.com/cloudflare-one/applications/configure-apps/self-hosted-apps/" target="_blank">Cloudflare Access (self-hosted)</a> · <a href="https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/configure-tunnels/local-management/configuration-file/" target="_blank">Arquivo config.yml</a></p></div>
+  </section>
+
+  <!-- 15 -->
+  <section class="page" id="nuvem">
+    <div class="eyebrow"><span class="dot"></span> Fase IV · Etapa 16</div>
+    <h2>Evoluir para a nuvem</h2>
+    <p>Dois caminhos: <b>VM própria + Docker</b> (mais barato) ou <b>PaaS gerenciado</b> (mais prático).</p>
+    <div class="box warn"><span class="h">⚠ Por que não é "Heroku puro"</span><p>O stack precisa de processos <b>sempre-ligados</b>, <b>volumes persistentes</b> e <b>navegador</b> (Playwright p/ login do NotebookLM). Fuja de FS efêmero / serviços que "dormem".</p></div>
+    <h3>🅰 VM própria + Docker</h3>
+    <table>
+      <tr><th>Opção</th><th>Custo</th><th>Notas</th></tr>
+      <tr><td><b>Oracle Cloud Free</b></td><td><b>Grátis sempre</b></td><td>VM ARM generosa. Use imagens <b>arm64</b>.</td></tr>
+      <tr><td>Hetzner CX22</td><td>~€4/mês</td><td>x86.</td></tr>
+    </table>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">docker-compose.yml (esqueleto)</span></div><code>services:
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    ports: ["5678:5678"]
+    environment: [ "NODE_FUNCTION_ALLOW_BUILTIN=*" ]
+    volumes: [ "./n8n-data:/home/node/.n8n" ]
+  hermes:
+    image: &lt;imagem-oficial-do-hermes&gt;     # ver doc de Docker do Hermes
+    restart: unless-stopped
+    volumes: [ "./hermes-data:/root/.hermes" ]</code></pre>
+    <h3>🅱 PaaS gerenciado (Fly.io / Railway)</h3>
+    <table>
+      <tr><th>Plataforma</th><th>Custo</th><th>Encaixe</th></tr>
+      <tr><td><b>Fly.io</b></td><td>Free + ~US$2–5</td><td>🟢 long-lived + volumes persistentes.</td></tr>
+      <tr><td><b>Railway</b></td><td>~US$5 (trial)</td><td>🟢 quase 1-clique; templates de n8n.</td></tr>
+      <tr><td>Render</td><td>Free (dorme)</td><td>🟡 free hiberna → worker pago + disco.</td></tr>
+      <tr><td>Heroku</td><td>Sem free</td><td>🔴 FS efêmero → evite.</td></tr>
+    </table>
+    <div class="box danger"><span class="h">⚠ O ponto que nenhum PaaS resolve: NotebookLM</span><p>Login exige <b>navegador (Playwright)</b> e uma sessão (<code>storage_state.json</code>) que <b>expira</b>. Faça <code>notebooklm login</code> <b>localmente</b> e suba <code>~/.notebooklm/profiles/default/storage_state.json</code> para o <b>volume persistente</b>. Sem volume, a sessão some a cada deploy.</p></div>
+    <div class="box src"><span class="h">↗ Fontes</span><p><a href="https://hermes-agent.nousresearch.com/docs/user-guide/docker" target="_blank">Hermes Docker</a> · <a href="https://docs.n8n.io/hosting/installation/docker/" target="_blank">n8n Docker</a> · <a href="https://www.oracle.com/cloud/free/" target="_blank">Oracle Free</a> · <a href="https://fly.io/docs/" target="_blank">Fly.io</a></p></div>
+  </section>
+
+  <!-- ORACLE -->
+  <section class="page" id="oracle">
+    <div class="eyebrow"><span class="dot"></span> Fase IV · Etapa 17</div>
+    <h2>Oracle Cloud Free Tier — do zero ao ecossistema na nuvem</h2>
+    <p class="lead2">O <b>Oracle Cloud Free Tier</b> oferece uma VM ARM gratuita para sempre — generosa o suficiente para rodar o Hermes, o n8n e o NotebookLM CLI 24/7, sem custo. A boa notícia: a instalação é <b>idêntica ao WSL2</b> (é Ubuntu Linux de verdade), então você reutiliza tudo que aprendeu neste guia. As diferenças são poucas e estão documentadas aqui.</p>
+    <p>Ao final desta etapa, seu cérebro estará <b>sempre online</b> — independente de a sua máquina pessoal estar ligada.</p>
+
+    <div class="box tip"><span class="h">O que é gratuito para sempre (Always Free)</span><p>A Oracle oferece 2 tiers: <b>Free Trial</b> (US$300 por 30 dias, vence) e <b>Always Free</b> (não vence). Para este guia, usamos exclusivamente os recursos <b>Always Free</b>: VM ARM Ampere A1 com até <b>4 OCPUs e 24 GB RAM</b> + 200 GB de armazenamento em bloco. Mais que suficiente.</p></div>
+
+    <h3>Parte 1 — Criar a conta Oracle Cloud</h3>
+    <ol class="steps">
+      <li>Acesse <a href="https://www.oracle.com/cloud/free/" target="_blank">oracle.com/cloud/free</a> e clique em <b>Start for free</b>.</li>
+      <li>Preencha nome, e-mail e escolha a <b>Home Region</b> (ex.: <code>Brazil East (São Paulo)</code>). <b>Atenção: a Home Region não pode ser alterada depois.</b></li>
+      <li>O cadastro pede um <b>cartão de crédito</b> para verificação de identidade — ele não é cobrado enquanto você usar só recursos Always Free. A Oracle cobra apenas se você upgradear manualmente para uma conta paga.</li>
+      <li>Aguarde o e-mail de confirmação e ative a conta.</li>
+    </ol>
+
+    <h3>Parte 2 — Criar a VM (instância ARM)</h3>
+    <ol class="steps">
+      <li>No Console Oracle, acesse <b>Compute → Instances → Create Instance</b>.</li>
+      <li><b>Name:</b> algo como <code>segundo-cerebro</code>.</li>
+      <li>Em <b>Image and shape</b>, clique em <b>Change image</b>: escolha <b>Ubuntu 22.04 (Minimal)</b>.</li>
+      <li>Clique em <b>Change shape</b>:
+        <ul>
+          <li>Shape series: <b>Ampere</b> (ARM)</li>
+          <li>Shape name: <b>VM.Standard.A1.Flex</b></li>
+          <li>OCPUs: <b>2</b> · Memory: <b>12 GB</b> (ambos dentro do free tier de 4 OCPUs / 24 GB total)</li>
+        </ul>
+      </li>
+      <li>Em <b>Networking</b>, deixe a VCN padrão (ela é criada automaticamente).</li>
+      <li>Em <b>Add SSH keys</b>: escolha <b>Generate a key pair for me</b> e <b>baixe os dois arquivos</b> (<code>.key</code> e <code>.key.pub</code>) — você precisará da chave privada para conectar.</li>
+      <li>Clique em <b>Create</b>. A VM levará ~2 minutos para ficar com status <b>Running</b>.</li>
+      <li>Anote o <b>IP público</b> da instância (coluna "Public IP address" na listagem).</li>
+    </ol>
+
+    <h3>Parte 3 — Abrir as portas necessárias (Security List)</h3>
+    <p>Por padrão, a Oracle bloqueia todo tráfego de entrada exceto SSH (porta 22). Para acessar o n8n pelo navegador, abra a porta 5678:</p>
+    <ol class="steps">
+      <li>No Console, acesse <b>Networking → Virtual Cloud Networks → (sua VCN) → Security Lists → Default Security List</b>.</li>
+      <li>Clique em <b>Add Ingress Rules</b> e preencha:
+        <ul>
+          <li><b>Source CIDR:</b> <code>0.0.0.0/0</code> (ou só o seu IP para maior segurança)</li>
+          <li><b>IP Protocol:</b> TCP</li>
+          <li><b>Destination Port Range:</b> <code>5678</code></li>
+        </ul>
+      </li>
+      <li>Salve. Repita para a porta <code>80</code> e <code>443</code> se quiser usar domínio próprio com Cloudflare Tunnel depois.</li>
+    </ol>
+    <div class="box warn"><span class="h">⚠ Firewall do Ubuntu também precisa de liberação</span><p>O Ubuntu na Oracle vem com <code>iptables</code> ativo. Após conectar na VM, rode:</p></div>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash — na VM Oracle</span></div><code>sudo iptables -I INPUT -p tcp --dport 5678 -j ACCEPT
+sudo iptables -I INPUT -p tcp --dport 80 -j ACCEPT
+sudo iptables -I INPUT -p tcp --dport 443 -j ACCEPT
+# para persistir após reboot:
+sudo apt install iptables-persistent -y && sudo netfilter-persistent save</code></pre>
+
+    <h3>Parte 4 — Conectar via SSH</h3>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash — no seu terminal local (WSL2 ou terminal do Mac/Linux)</span></div><code># ajuste o caminho para onde você salvou a chave privada:
+chmod 400 ~/Downloads/ssh-key-XXXX.key
+ssh -i ~/Downloads/ssh-key-XXXX.key ubuntu@IP_PUBLICO_DA_VM
+
+# se aparecer "Are you sure you want to continue connecting?", escreva: yes</code></pre>
+    <p>Você verá o prompt <code>ubuntu@segundo-cerebro:~$</code> — está dentro da VM. Agora é Linux de verdade, os próximos passos são idênticos ao WSL2.</p>
+
+    <h3>Parte 5 — Instalar o ecossistema (mesmas etapas do guia)</h3>
+    <p>Na VM, siga <b>exatamente</b> as mesmas etapas que você já fez no WSL2:</p>
+    <ol class="steps">
+      <li><b>Etapa 01:</b> verifique Python/Node (<code>sudo apt update && sudo apt install python3 python3-pip nodejs npm git -y</code>).</li>
+      <li><b>Etapa 03:</b> instale o Hermes (<code>pip install hermes-agent && hermes postinstall</code>).</li>
+      <li><b>Etapa 04:</b> instale o NotebookLM CLI (venv + playwright).</li>
+      <li><b>Etapa 05:</b> crie o <code>SOUL.md</code>.</li>
+      <li><b>Etapa 06:</b> configure o gateway do Telegram (<code>hermes gateway setup</code>).</li>
+      <li><b>Etapa 08:</b> instale como serviço systemd (<code>hermes gateway install</code>).</li>
+      <li><b>Etapas 09–13:</b> instale o n8n, crie os workflows e conecte o MCP.</li>
+    </ol>
+    <div class="box tip"><span class="h">💡 Sem linger necessário</span><p>Na Oracle Cloud você não precisa do <code>loginctl enable-linger</code> — o usuário <code>ubuntu</code> já tem sessão persistente no systemd (diferente do WSL2, onde o subsistema Linux pode ser desligado). Os serviços simplesmente ficam ligados enquanto a VM estiver rodando.</p></div>
+
+    <h3>Parte 6 — O detalhe mais importante: login do NotebookLM</h3>
+    <p>O <code>notebooklm login</code> abre um <b>navegador Chromium</b> para fazer o login no Google — algo impossível numa VM sem interface gráfica. A solução é fazer o login <b>na sua máquina local</b> e <b>copiar a sessão</b> para a VM:</p>
+    <ol class="steps">
+      <li>Na sua máquina local (WSL2), faça o login normalmente: <code>notebooklm login</code>.</li>
+      <li>Localize o arquivo de sessão gerado:
+        <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash — na sua máquina LOCAL</span></div><code>ls ~/.notebooklm/profiles/default/storage_state.json</code></pre>
+      </li>
+      <li>Copie o arquivo para a VM via <code>scp</code>:
+        <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash — na sua máquina LOCAL</span></div><code># crie o diretório na VM primeiro:
+ssh -i ~/Downloads/ssh-key-XXXX.key ubuntu@IP_DA_VM \
+  "mkdir -p ~/.notebooklm/profiles/default"
+
+# copie o arquivo de sessão:
+scp -i ~/Downloads/ssh-key-XXXX.key \
+  ~/.notebooklm/profiles/default/storage_state.json \
+  ubuntu@IP_DA_VM:~/.notebooklm/profiles/default/storage_state.json</code></pre>
+      </li>
+      <li>Na VM, confirme que funcionou: <code>notebooklm auth check</code> (deve mostrar ✓).</li>
+    </ol>
+    <div class="box warn"><span class="h">⚠ A sessão expira periodicamente</span><p>O Google invalida a sessão do NotebookLM de tempos em tempos (dias a semanas). Quando o <code>notebooklm auth check</code> falhar, repita o processo: login local + <code>scp</code> do <code>storage_state.json</code> para a VM. Não há como automatizar completamente essa etapa, pois o Google exige autenticação interativa.</p></div>
+
+    <h3>Parte 7 — Acessar o n8n pelo navegador</h3>
+    <p>Com a VM rodando e a porta 5678 aberta, acesse o n8n de qualquer lugar:</p>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">browser</span></div><code>http://IP_PUBLICO_DA_VM:5678</code></pre>
+    <p>Para uma URL mais amigável e com HTTPS (ex.: <code>https://n8n.seudominio.com</code>), use o <b>Cloudflare Tunnel com named tunnel</b> (Etapa 15 deste guia). É grátis e leva ~10 minutos.</p>
+
+    <h3>Parte 8 — Verificar que tudo sobe no boot</h3>
+    <pre><div class="bar"><i></i><i></i><i></i><span class="t">bash — na VM Oracle</span></div><code>systemctl --user status hermes-gateway    # deve estar active (running)
+systemctl --user status n8n               # deve estar active (running)
+hermes mcp test n8n                       # deve descobrir as tools
+notebooklm list                           # deve listar seus notebooks</code></pre>
+    <p>Para simular um reboot e confirmar que tudo volta: <code>sudo reboot</code> → aguarde ~1 minuto → reconecte via SSH e rode os comandos acima.</p>
+
+    <h3>Resumo de diferenças: Oracle Cloud vs WSL2</h3>
+    <table>
+      <tr><th>Aspecto</th><th>WSL2 (local)</th><th>Oracle Cloud Free</th></tr>
+      <tr><td>Disponibilidade</td><td>Só quando o PC está ligado</td><td>24/7 sempre online</td></tr>
+      <tr><td>Custo</td><td>Grátis</td><td>Grátis (Always Free)</td></tr>
+      <tr><td>Instalação</td><td>Idêntica</td><td>Idêntica</td></tr>
+      <tr><td>Linger (systemd)</td><td><code>loginctl enable-linger</code> necessário</td><td>Não necessário</td></tr>
+      <tr><td>Login NotebookLM</td><td>Direto (<code>notebooklm login</code>)</td><td>Local + <code>scp</code> do <code>storage_state.json</code></td></tr>
+      <tr><td>Acesso ao n8n</td><td><code>localhost:5678</code></td><td>IP público ou domínio via Tunnel</td></tr>
+      <tr><td>Arquitetura</td><td>x86_64</td><td>ARM64 (Ampere A1)</td></tr>
+      <tr><td>Firewall</td><td>Não precisa configurar</td><td>Security List + iptables</td></tr>
+    </table>
+
+    <div class="box src"><span class="h">↗ Fontes</span><p><a href="https://www.oracle.com/cloud/free/" target="_blank">Oracle Cloud Free Tier</a> · <a href="https://docs.oracle.com/en-us/iaas/Content/Compute/Tasks/launchinginstance.htm" target="_blank">Criar instância (docs Oracle)</a> · <a href="https://docs.oracle.com/en-us/iaas/Content/Network/Tasks/securitylists.htm" target="_blank">Security Lists (docs Oracle)</a></p></div>
+  </section>
+
+  <!-- 18 -->
+  <section class="page" id="licoes">
+    <div class="eyebrow"><span class="dot"></span> Fase V · Etapa 18</div>
+    <h2>Lições aprendidas</h2>
+    <table>
+      <tr><th>Tema</th><th>Lição</th></tr>
+      <tr><td>SOUL.md</td><td>Maiúsculo (<code>SOUL.md</code>). Relido a cada mensagem. Persona em prosa, não regras.</td></tr>
+      <tr><td>Skills / MCP</td><td>Carregam no boot → <code>hermes gateway restart</code> após mudar.</td></tr>
+      <tr><td>PATH em systemd</td><td>Serviços têm PATH mínimo → <b>caminho absoluto</b> do <code>notebooklm</code> no n8n e em scripts.</td></tr>
+      <tr><td>Modelo grátis</td><td><b>Tool dedicada &gt; diretriz do SOUL.</b> Resolve roteamento e o "roubo" pela memory.</td></tr>
+      <tr><td>Tools por plataforma</td><td><code>hermes tools --summary</code>; desabilite com <code>--platform telegram</code>.</td></tr>
+      <tr><td>NotebookLM</td><td><code>ask</code> sintetiza; literal via <code>source fulltext</code>. <code>language set pt_BR</code> é global. <code>source clean -y</code> só em fontes assentadas.</td></tr>
+      <tr><td>Áudio</td><td>WAV→MP3 (ffmpeg) p/ Telegram. TTS bom = <b>Gemini API key</b>.</td></tr>
+      <tr><td>Scripts</td><td>Heredoc quebra indentação Python → <b>base64</b>. Destrutivo = determinístico.</td></tr>
+      <tr><td>n8n</td><td>self-host grátis; EACCES → prefixo npm no <code>$HOME</code>; <code>NODE_FUNCTION_ALLOW_BUILTIN=*</code>.</td></tr>
+    </table>
+  </section>
+
+  <!-- 19 -->
+  <section class="page" id="fontes">
+    <div class="eyebrow"><span class="dot"></span> Fase V · Etapa 19</div>
+    <h2>Fontes &amp; referências</h2>
+    <ul>
+      <li><b>Hermes Agent:</b> <a href="https://hermes-agent.nousresearch.com/docs/" target="_blank">docs</a> · <a href="https://hermes-agent.nousresearch.com/docs/getting-started/quickstart" target="_blank">quickstart</a> · <a href="https://hermes-agent.nousresearch.com/docs/reference/cli-commands" target="_blank">comandos</a> · <a href="https://hermes-agent.nousresearch.com/docs/reference/faq" target="_blank">FAQ</a></li>
+      <li><b>Recursos:</b> <a href="https://hermes-agent.nousresearch.com/docs/user-guide/messaging/telegram" target="_blank">Telegram</a> · <a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/tts" target="_blank">TTS</a> · <a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/vision" target="_blank">Visão</a> · <a href="https://hermes-agent.nousresearch.com/docs/user-guide/features/mcp" target="_blank">MCP</a> · <a href="https://hermes-agent.nousresearch.com/docs/user-guide/docker" target="_blank">Docker</a></li>
+      <li><b>NotebookLM CLI:</b> <a href="https://github.com/teng-lin/notebooklm-py" target="_blank">teng-lin/notebooklm-py</a></li>
+      <li><b>n8n:</b> <a href="https://docs.n8n.io/" target="_blank">docs</a> · <a href="https://docs.n8n.io/hosting/installation/docker/" target="_blank">Docker</a></li>
+      <li><b>Cloudflare Tunnel:</b> <a href="https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/" target="_blank">docs</a></li>
+      <li><b>Nuvem:</b> <a href="https://www.oracle.com/cloud/free/" target="_blank">Oracle Free</a> · <a href="https://fly.io/docs/" target="_blank">Fly.io</a></li>
+    </ul>
+    <div class="box tip"><span class="h">Disclaimer</span><p>Versões mudam. Se algum passo divergir, a documentação oficial linkada acima é a fonte da verdade. Adapte nomes de notebooks, caminhos (<code>USUARIO</code>) e variáveis ao seu ambiente.</p></div>
+  </section>
+
+  <!-- PAGE NAV -->
+  <div class="pagenav">
+    <button id="prevBtn"><span class="l">Anterior</span><span class="tx">←</span></button>
+    <span class="pagemeta" id="pageMeta"></span>
+    <button id="nextBtn"><span class="l">Próximo</span><span class="tx">→</span></button>
+  </div>
+</main>
+</div>
+<script>
+mermaid.initialize({startOnLoad:true,theme:'base',themeVariables:{background:'#15161e',primaryColor:'#1b1d27',primaryTextColor:'#ece7dd',primaryBorderColor:'#e6b65f',lineColor:'#9b978d',fontFamily:'JetBrains Mono, monospace',fontSize:'13px'}});
+document.querySelectorAll('pre').forEach(pre=>{const b=document.createElement('button');b.className='copy';b.textContent='copiar';b.onclick=()=>{const c=pre.querySelector('code');navigator.clipboard.writeText(c.innerText.trim());b.textContent='copiado ✓';setTimeout(()=>b.textContent='copiar',1400);};pre.appendChild(b);});
+
+const pages=[...document.querySelectorAll('.page')];
+const ids=pages.map(p=>p.id);
+const links=[...document.querySelectorAll('[data-page]')];
+const labelOf=id=>{const l=links.find(a=>a.dataset.page===id&&a.dataset.label);return l?l.dataset.label:id;};
+const prevBtn=document.getElementById('prevBtn'),nextBtn=document.getElementById('nextBtn'),pageMeta=document.getElementById('pageMeta');
+function show(id){
+  let i=ids.indexOf(id); if(i<0){i=0;id=ids[0];}
+  pages.forEach(p=>p.classList.remove('active'));
+  pages[i].classList.add('active');
+  document.querySelectorAll('nav.side a').forEach(a=>a.classList.toggle('active',a.dataset.page===id));
+  const prev=ids[i-1],next=ids[i+1];
+  prevBtn.style.visibility=prev?'visible':'hidden';
+  nextBtn.style.visibility=next?'visible':'hidden';
+  if(prev){prevBtn.querySelector('.tx').textContent='← '+labelOf(prev);prevBtn.onclick=()=>go(prev);}
+  if(next){nextBtn.querySelector('.tx').textContent=labelOf(next)+' →';nextBtn.onclick=()=>go(next);}
+  pageMeta.textContent=String(i+1).padStart(2,'0')+' / '+String(ids.length).padStart(2,'0');
+  if(window.matchMedia('(max-width:1040px)').matches)document.querySelector('nav.side').classList.remove('open');
+}
+function go(id){history.pushState(null,'','#'+id);show(id);window.scrollTo({top:0,behavior:'instant'});}
+links.forEach(a=>a.addEventListener('click',e=>{e.preventDefault();go(a.dataset.page);}));
+window.addEventListener('popstate',()=>show((location.hash||'#inicio').slice(1)));
+show((location.hash||'#inicio').slice(1));
+</script>
+</body>
+</html>
